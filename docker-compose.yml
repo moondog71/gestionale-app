@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - internal
+      - app-network
 
   backend:
     build: ./backend
@@ -29,24 +29,17 @@ services:
     depends_on:
       - postgres
     networks:
-      - internal
+      - app-network
 
-  nginx:
-    image: nginx:alpine
+  frontend:
+    build: ./frontend
     restart: unless-stopped
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - backend
     networks:
-      - internal
-      - proxy-net
+      - app-network
 
 volumes:
   postgres_data:
 
 networks:
-  internal:
+  app-network:
     driver: bridge
-  proxy-net:
-    external: true
