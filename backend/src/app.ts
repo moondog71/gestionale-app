@@ -6,6 +6,8 @@ import prismaPlugin from './plugins/prisma'
 import authRoutes from './routes/auth'
 import settingsRoutes from './routes/settings'
 import clientsRoutes from './routes/clients'
+import geoRoutes from './routes/geo'
+import { loadCapData } from './services/geo.service'
 
 const app = Fastify({ logger: true })
 
@@ -17,7 +19,12 @@ async function main() {
   await app.register(authRoutes)
   await app.register(settingsRoutes)
   await app.register(clientsRoutes)
+  await app.register(geoRoutes)
   app.get('/api/health', async () => ({ status: 'ok', app: 'gestionale' }))
+
+  // Carica database CAP in background (non blocca l'avvio)
+  loadCapData().catch(console.error)
+
   await app.listen({ port: 3000, host: '0.0.0.0' })
 }
 

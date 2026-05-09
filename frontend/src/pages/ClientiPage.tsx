@@ -66,7 +66,7 @@ export default function ClientiPage() {
     setCapLoading(true)
     setCapFound(false)
     try {
-      const res = await fetch(`https://api.zippopotam.us/it/${cap}`)
+      const results = await apiFetch<{city:string,province:string}[]>(`/geo/cap/${cap}`)
       if (!res.ok) { setCapLoading(false); return }
       const data = await res.json()
       if (data.places && data.places.length > 0) {
