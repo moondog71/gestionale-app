@@ -11,6 +11,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import SearchIcon from '@mui/icons-material/Search'
 import BusinessIcon from '@mui/icons-material/BusinessOutlined'
 import PersonIcon from '@mui/icons-material/PersonOutlined'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import Layout from '../components/ui/Layout'
 import { apiFetch } from '../api/client'
 import { Client } from '../types'
@@ -41,6 +42,8 @@ export default function ClientiPage() {
   const [selected, setSelected] = useState<any>(null)
   const [form, setForm] = useState<Partial<Client>>(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [capLoading, setCapLoading] = useState(false)
+  const [capFound, setCapFound] = useState(false)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
@@ -57,8 +60,34 @@ export default function ClientiPage() {
 
   useEffect(() => { load() }, [load])
 
-  const openCreate = () => { setSelected(null); setForm(EMPTY); setModalOpen(true) }
-  const openEdit = (c: any) => { setSelected(c); setForm(c); setModalOpen(true) }
+  // Autocomplete CAP → Città + Provincia via zippopotam.us
+  const lookupCap = useCallback(async (cap: string) => {
+    if (cap.length !== 5 || !/^\d{5}$/.test(cap)) { setCapFound(false); return }
+    setCapLoading(true)
+    setCapFound(false)
+    try {
+      const res = await fetch(`https://api.zippopotam.us/it/${cap}`)
+      if (!res.ok) { setCapLoading(false); return }
+      const data = await res.json()
+      if (data.places && data.places.length > 0) {
+        const place = data.places[0]
+        setForm(prev => ({
+          ...prev,
+          city: place['place name'],
+          province: place['state abbreviation']
+        }))
+        setCapFound(true)
+      }
+    } catch {}
+    finally { setCapLoading(false) }
+  }, [])
+
+  const openCreate = () => {
+    setSelected(null); setForm(EMPTY); setCapFound(false); setModalOpen(true)
+  }
+  const openEdit = (c: any) => {
+    setSelected(c); setForm(c); setCapFound(false); setModalOpen(true)
+  }
   const openDelete = (c: any) => { setSelected(c); setDeleteOpen(true) }
 
   const handleSave = async () => {
@@ -82,7 +111,7 @@ export default function ClientiPage() {
   }
 
   const f = (k: keyof Client) => ({
-    value: form[k] || '',
+    value: (form[k] as string) || '',
     onChange: (e: any) => setForm(p => ({ ...p, [k]: e.target.value }))
   })
 
@@ -91,7 +120,6 @@ export default function ClientiPage() {
 
   return (
     <Layout>
-      {/* Top bar */}
       <Box sx={{ px: 3, py: 1.5, display: 'flex', alignItems: 'center', gap: 2,
         borderBottom: '0.5px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Typography variant="h6" sx={{ flex: 1 }}>
@@ -107,13 +135,11 @@ export default function ClientiPage() {
       </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto', p: 2.5 }}>
-        {/* Ricerca */}
         <TextField placeholder="Cerca per nome, CF, P.IVA, città..." fullWidth size="small"
           value={search} onChange={e => setSearch(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
           sx={{ mb: 2 }} />
 
-        {/* Filtri */}
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           {[
             { k: 'tutti', label: `Tutti (${clients.length})` },
@@ -127,7 +153,6 @@ export default function ClientiPage() {
           ))}
         </Stack>
 
-        {/* Lista */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
             <CircularProgress color="primary" />
@@ -214,11 +239,34 @@ export default function ClientiPage() {
           </Box>
           <Divider sx={{ my: 1.5 }} />
           <TextField label="Indirizzo" fullWidth sx={{ mb: 2 }} {...f('address')} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 2, mb: 2 }}>
+
+          {/* CAP con autocomplete */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: 2, mb: 2 }}>
+            <TextField
+              label="CAP"
+              value={form.zip || ''}
+              onChange={e => {
+                const val = e.target.value.replace(/\D/g, '').slice(0, 5)
+                setForm(p => ({ ...p, zip: val }))
+                if (val.length === 5) lookupCap(val)
+                else { setCapFound(false) }
+              }}
+              InputProps={{
+                endAdornment: capLoading
+                  ? <CircularProgress size={16} sx={{ mr: 1 }} />
+                  : capFound
+                  ? <CheckCircleOutlineIcon fontSize="small" color="success" sx={{ mr: 1 }} />
+                  : null
+              }}
+              inputProps={{ maxLength: 5 }}
+            />
             <TextField label="Città" {...f('city')} />
-            <TextField label="CAP" {...f('zip')} />
-            <TextField label="Prov." {...f('province')} />
+            <TextField label="Prov." {...f('province')}
+              inputProps={{ maxLength: 2, style: { textTransform: 'uppercase' } }}
+              onChange={e => setForm(p => ({ ...p, province: e.target.value.toUpperCase() }))}
+            />
           </Box>
+
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
             <TextField label="Telefono" {...f('phone')} />
             <TextField label="Email" {...f('email')} />
