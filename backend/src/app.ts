@@ -5,6 +5,7 @@ import multipart from '@fastify/multipart'
 import prismaPlugin from './plugins/prisma'
 import authRoutes from './routes/auth'
 import settingsRoutes from './routes/settings'
+import clientsRoutes from './routes/clients'
 
 const app = Fastify({ logger: true })
 
@@ -15,6 +16,7 @@ async function main() {
   await app.register(prismaPlugin)
   await app.register(authRoutes)
   await app.register(settingsRoutes)
+  await app.register(clientsRoutes)
   app.get('/api/health', async () => ({ status: 'ok', app: 'gestionale' }))
   await app.listen({ port: 3000, host: '0.0.0.0' })
 }
