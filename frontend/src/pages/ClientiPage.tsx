@@ -60,25 +60,18 @@ export default function ClientiPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Autocomplete CAP → Città + Provincia via zippopotam.us
+  // Autocomplete CAP via dataset ISTAT (backend)
   const lookupCap = useCallback(async (cap: string) => {
-    if (cap.length !== 5 || !/^\d{5}$/.test(cap)) { setCapFound(false); return }
+    if (cap.length !== 5 || !/^[0-9]{5}$/.test(cap)) { setCapFound(false); return }
     setCapLoading(true)
     setCapFound(false)
     try {
       const results = await apiFetch<{city:string,province:string}[]>(`/geo/cap/${cap}`)
-      if (!res.ok) { setCapLoading(false); return }
-      const data = await res.json()
-      if (data.places && data.places.length > 0) {
-        const place = data.places[0]
-        setForm(prev => ({
-          ...prev,
-          city: place['place name'],
-          province: place['state abbreviation']
-        }))
+      if (results && results.length > 0) {
+        setForm(prev => ({ ...prev, city: results[0].city, province: results[0].province }))
         setCapFound(true)
       }
-    } catch {}
+    } catch { setCapFound(false) }
     finally { setCapLoading(false) }
   }, [])
 
