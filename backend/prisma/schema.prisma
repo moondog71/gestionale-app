@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id           String       @id @default(uuid())
+  type         String       @default("privato")
+  name         String
+  fiscalCode   String?
+  vatNumber    String?
+  sdi          String?      @default("0000000")
+  pec          String?
+  address      String?
+  city         String?
+  zip          String?
+  province     String?
+  phone        String?
+  email        String?
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  preventivi   Preventivo[]
+  interventi   Intervento[]
+  ddts         DDT[]
+  fatture      Fattura[]
+}
+
+model Preventivo {
+  id           String       @id @default(uuid())
+  number       String       @unique
+  year         Int
+  sequence     Int
+  clientId     String
+  client       Client       @relation(fields: [clientId], references: [id])
+  date         DateTime     @default(now())
+  expiryDate   DateTime?
+  status       String       @default("bozza")
+  items        Json         @default("[]")
+  notes        String?
+  stampDuty    Boolean      @default(false)
+  totalAmount  Decimal      @db.Decimal(10, 2) @default(0)
+  driveFileId  String?
+  driveUrl     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  interventi   Intervento[]
+  fatture      Fattura[]
+}
+
+model Intervento {
+  id              String       @id @default(uuid())
+  number          String       @unique
+  year            Int
+  sequence        Int
+  clientId        String
+  client          Client       @relation(fields: [clientId], references: [id])
+  preventivoId    String?
+  preventivo      Preventivo?  @relation(fields: [preventivoId], references: [id])
+  date            DateTime     @default(now())
+  addressOverride String?
+  applianceType   String
+  brand           String?
+  model           String?
+  serial          String?
+  workType        String       @default("riparazione")
+  description     String?
+  parts           Json         @default("[]")
+  laborHours      Decimal?     @db.Decimal(5, 2)
+  laborRate       Decimal?     @db.Decimal(10, 2)
+  totalAmount     Decimal      @db.Decimal(10, 2) @default(0)
+  stampDuty       Boolean      @default(false)
+  outcome         String       @default("risolto")
+  notes           String?
+  driveFileId     String?
+  driveUrl        String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  fatture         Fattura[]
+}
+
+model DDT {
+  id           String    @id @default(uuid())
+  number       String    @unique
+  year         Int
+  sequence     Int
+  clientId     String
+  client       Client    @relation(fields: [clientId], references: [id])
+  date         DateTime  @default(now())
+  reason       String    @default("riparazione")
+  items        Json      @default("[]")
+  carrier      String?
+  notes        String?
+  driveFileId  String?
+  driveUrl     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Fattura {
+  id             String       @id @default(uuid())
+  number         String       @unique
+  year           Int
+  sequence       Int
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id])
+  preventivoId   String?
+  preventivo     Preventivo?  @relation(fields: [preventivoId], references: [id])
+  interventoId   String?
+  intervento     Intervento?  @relation(fields: [interventoId], references: [id])
+  date           DateTime     @default(now())
+  dueDate        DateTime?
+  items          Json         @default("[]")
+  paymentMethod  String       @default("contanti")
+  status         String       @default("emessa")
+  stampDuty      Boolean      @default(false)
+  totalAmount    Decimal      @db.Decimal(10, 2) @default(0)
+  driveFileId    String?
+  driveUrl       String?
+  xmlFileId      String?
+  xmlUrl         String?
+  paidAt         DateTime?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Scontrino {
+  id             String    @id @default(uuid())
+  date           DateTime  @default(now())
+  amount         Decimal   @db.Decimal(10, 2)
+  paymentType    String    @default("contanti")
+  clientId       String?
+  interventoId   String?
+  driveFileId    String
+  driveUrl       String
+  filename       String
+  notes          String?
+  createdAt      DateTime  @default(now())
+}
+
+model Counter {
+  type       String
+  year       Int
+  sequence   Int      @default(0)
+  @@id([type, year])
+}
+
+model Setting {
+  key        String   @id
+  value      String
+}
