@@ -6,6 +6,7 @@ import prismaPlugin from './plugins/prisma'
 import authRoutes from './routes/auth'
 import settingsRoutes from './routes/settings'
 import clientsRoutes from './routes/clients'
+import interventiRoutes from './routes/interventi'
 import geoRoutes from './routes/geo'
 import { loadCapData } from './services/geo.service'
 
@@ -19,12 +20,10 @@ async function main() {
   await app.register(authRoutes)
   await app.register(settingsRoutes)
   await app.register(clientsRoutes)
+  await app.register(interventiRoutes)
   await app.register(geoRoutes)
   app.get('/api/health', async () => ({ status: 'ok', app: 'gestionale' }))
-
-  // Carica database CAP in background (non blocca l'avvio)
   loadCapData().catch(console.error)
-
   await app.listen({ port: 3000, host: '0.0.0.0' })
 }
 
