@@ -46,9 +46,10 @@ export default async function scontriniRoutes(app: FastifyInstance) {
   // Importa da Drive: sposta file + salva scontrino
   app.post('/api/scontrini/import-drive', { preHandler: authenticate }, async (req, reply) => {
     const body = req.body as any
-    const { fileId, filename, clientId, interventoId, preventivoId,
+    const { fileId: fid, driveFileId, filename, clientId, interventoId, preventivoId,
       date, amount, paymentType, receiptNumber, fiscalCode, discrepancyNote, notes } = body
 
+    const fileId = fid || driveFileId
     // Controlla discrepanza
     if (interventoId) {
       const intv = await app.prisma.intervento.findUnique({ where: { id: interventoId } })
@@ -126,6 +127,7 @@ export default async function scontriniRoutes(app: FastifyInstance) {
       date, receiptNumber, fiscalCode, discrepancyNote, notes,
       driveFileId, driveUrl, filename } = body
 
+    const fileId = fid || driveFileId
     // Controlla discrepanza
     if (interventoId) {
       const intv = await app.prisma.intervento.findUnique({ where: { id: interventoId } })
