@@ -8,6 +8,7 @@ datasource db {
 }
 
 model Client {
+  scontrini    Scontrino[]
   id           String       @id @default(uuid())
   type         String       @default("privato")
   name         String
@@ -31,6 +32,7 @@ model Client {
 }
 
 model Preventivo {
+  scontrini      Scontrino[]
   id           String       @id @default(uuid())
   number       String       @unique
   year         Int
@@ -53,6 +55,7 @@ model Preventivo {
 }
 
 model Intervento {
+  scontrini      Scontrino[]
   id              String       @id @default(uuid())
   number          String       @unique
   year            Int
@@ -131,17 +134,24 @@ model Fattura {
 }
 
 model Scontrino {
-  id             String    @id @default(uuid())
-  date           DateTime  @default(now())
-  amount         Decimal   @db.Decimal(10, 2)
-  paymentType    String    @default("contanti")
-  clientId       String?
-  interventoId   String?
-  driveFileId    String
-  driveUrl       String
-  filename       String
-  notes          String?
-  createdAt      DateTime  @default(now())
+  id              String      @id @default(uuid())
+  date            DateTime    @default(now())
+  amount          Decimal     @db.Decimal(10, 2)
+  paymentType     String      @default("contanti")
+  clientId        String
+  client          Client      @relation(fields: [clientId], references: [id])
+  interventoId    String
+  intervento      Intervento  @relation(fields: [interventoId], references: [id])
+  preventivoId    String?
+  preventivo      Preventivo? @relation(fields: [preventivoId], references: [id])
+  receiptNumber   String?
+  fiscalCode      String?
+  discrepancyNote String?
+  driveFileId     String
+  driveUrl        String
+  filename        String
+  notes           String?
+  createdAt       DateTime    @default(now())
 }
 
 model Counter {

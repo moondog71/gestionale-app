@@ -51,3 +51,29 @@ export async function uploadFile(
 export async function deleteFile(fileId: string): Promise<void> {
   await drive.files.delete({ fileId }).catch(() => {})
 }
+
+export async function listPdfFiles(folderId: string): Promise<{id:string,name:string,createdTime:string,size:string}[]> {
+  const res = await drive.files.list({
+    q: `'${folderId}' in parents and mimeType='application/pdf' and trashed=false`,
+    fields: 'files(id,name,createdTime,size)',
+    orderBy: 'createdTime desc'
+  })
+  return (res.data.files || []) as any[]
+}
+
+export async function downloadFileBuffer(fileId: string): Promise<Buffer> {
+  const res = await drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'arraybuffer' }
+  )
+  return Buffer.from(res.data as ArrayBuffer)
+}
+
+export async function moveFile(fileId: string, fromFolderId: string, toFolderId: string): Promise<void> {
+  await drive.files.update({
+    fileId,
+    addParents: toFolderId,
+    removeParents: fromFolderId,
+    fields: 'id,parents'
+  })
+}
