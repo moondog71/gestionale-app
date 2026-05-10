@@ -184,3 +184,143 @@ export async function generatePdf(html: string): Promise<Buffer> {
     await browser.close()
   }
 }
+
+export function buildPreventivoHtml(preventivo: any, client: any, settings: Record<string,string>): string {
+  const items: any[] = Array.isArray(preventivo.items) ? preventivo.items : []
+  const total = parseFloat(preventivo.totalAmount || 0)
+  const stampDuty = preventivo.stampDuty
+  const compAddrLine = [settings.company_zip, settings.company_city,
+    settings.company_province ? '('+settings.company_province+')' : ''].filter(Boolean).join(' ')
+  const addrParts = [client?.address,
+    [client?.zip, client?.city, client?.province ? '('+client.province+')' : ''].filter(Boolean).join(' ')
+  ].filter(Boolean)
+
+  const STATUS_LABELS: Record<string,string> = {
+    bozza:'Bozza', inviato:'Inviato', accettato:'Accettato', rifiutato:'Rifiutato'
+  }
+
+  const itemRows = items.map((p: any) => {
+    const disc = parseFloat(p.discount||0)
+    const rowTotal = p.qty * p.unitPrice * (1 - disc/100)
+    return `<tr>
+      <td>${esc(p.description||'')}</td>
+      <td class="r">${fEur(p.unitPrice)}</td>
+      <td class="r">${p.qty}</td>
+      <td class="r">${esc(p.unit||'pz')}</td>
+      <td class="r">${disc > 0 ? disc+'%' : '—'}</td>
+      <td class="r">${fEur(rowTotal)}</td>
+      <td class="r">N2</td>
+    </tr>`
+  }).join('')
+
+  return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#333}
+.page{padding:12mm 15mm}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7mm}
+.logo{max-height:110px;max-width:280px;width:auto}
+.client-box{width:47%;border:1px solid #bbb;padding:7px 10px;border-radius:3px}
+.client-box .lbl{font-size:7pt;color:#888;font-weight:bold;text-transform:uppercase;margin-bottom:2px}
+.client-box .cname{font-size:11pt;font-weight:bold;color:#2B4BA0}
+.client-box .cdet{font-size:8pt;color:#444;margin-top:2px}
+.company-name{font-size:13pt;font-weight:bold;color:#2B4BA0}
+.company-det{font-size:8pt;color:#555;margin-top:1px}
+.company{margin-bottom:5mm}
+.doc-title{font-size:12pt;font-weight:bold;color:#2B4BA0;border-bottom:2.5px solid #2B4BA0;padding-bottom:3px;margin-bottom:4mm}
+table.info{width:100%;border-collapse:collapse;margin-bottom:4mm}
+table.info td{border:1px solid #ccc;padding:4px 8px;font-size:8pt}
+.il{background:#f5f7ff;font-weight:bold;color:#555;font-size:7pt;text-transform:uppercase}
+.iv{font-weight:bold;color:#2B4BA0}
+table.items{width:100%;border-collapse:collapse;margin-bottom:4mm}
+table.items th{background:#2B4BA0;color:#fff;padding:5px 8px;font-size:7.5pt;text-align:left}
+table.items th.r{text-align:right}
+table.items td{border-bottom:1px solid #eee;padding:4px 8px;font-size:8.5pt}
+table.items td.r{text-align:right}
+table.items tr:nth-child(even) td{background:#fafbff}
+.totbox{display:flex;justify-content:flex-end;margin-bottom:4mm}
+.totinner{width:52%;border:1px solid #ccc;border-radius:3px;overflow:hidden}
+.totinner table{width:100%;border-collapse:collapse}
+.totinner td{padding:4px 10px;font-size:8.5pt;border-bottom:1px solid #eee}
+.tv{text-align:right;font-weight:500}
+.gtot td{background:#2B4BA0!important;color:#fff;font-weight:bold;font-size:10.5pt}
+.brow td{font-size:7.5pt;color:#888}
+.regnote{font-size:7.5pt;color:#666;border:1px solid #ddd;padding:5px 8px;border-radius:2px;margin-bottom:4mm;line-height:1.4}
+.sigrow{display:flex;gap:15mm;margin-top:7mm}
+.sigbox{flex:1;border-top:1px solid #999;padding-top:3px}
+.siglbl{font-size:7.5pt;color:#666}
+.sigspace{height:18mm}
+.footer{margin-top:5mm;border-top:1px solid #ddd;padding-top:3px;font-size:7pt;color:#888;display:flex;justify-content:space-between}
+</style></head><body><div class="page">
+
+<div class="header">
+  <div style="width:48%">
+    ${settings.company_logo_base64
+      ? `<img src="${settings.company_logo_base64}" class="logo" alt="Logo">`
+      : `<div class="company-name">${esc(settings.company_name)}</div>`}
+  </div>
+  <div class="client-box">
+    <div class="lbl">Intestatario</div>
+    <div class="cname">${esc(client?.name||'')}</div>
+    ${client?.fiscalCode ? `<div class="cdet">C.F.: ${esc(client.fiscalCode)}</div>` : ''}
+    ${client?.vatNumber ? `<div class="cdet">P.IVA: ${esc(client.vatNumber)}</div>` : ''}
+    ${addrParts.map((a: string) => `<div class="cdet">${esc(a)}</div>`).join('')}
+  </div>
+</div>
+
+<div class="company">
+  <div class="company-name">${esc(settings.company_name||'')}</div>
+  <div class="company-det">${esc(settings.company_address||'')} - ${esc(compAddrLine)}</div>
+  <div class="company-det">P.IVA: ${esc(settings.company_vat||'')} &nbsp;|&nbsp; C.F.: ${esc(settings.company_fiscal_code||'')} &nbsp;|&nbsp; REA: ${esc(settings.company_rea||'')}</div>
+  <div class="company-det">Tel: ${esc(settings.company_phone||'')} &nbsp;|&nbsp; Email: ${esc(settings.company_email||'')}</div>
+</div>
+
+<div class="doc-title">PREVENTIVO N.&nbsp;${esc(preventivo.number)}&nbsp;&nbsp;del&nbsp;${fDate(preventivo.date)}</div>
+
+<table class="info">
+  <tr>
+    <td class="il">Data</td><td class="iv">${fDate(preventivo.date)}</td>
+    <td class="il">Scadenza</td><td class="iv">${preventivo.expiryDate ? fDate(preventivo.expiryDate) : '—'}</td>
+    <td class="il">Stato</td><td class="iv">${STATUS_LABELS[preventivo.status]||preventivo.status}</td>
+  </tr>
+</table>
+
+<table class="items">
+  <thead><tr>
+    <th style="width:44%">Descrizione</th>
+    <th class="r" style="width:12%">Prezzo</th>
+    <th class="r" style="width:8%">Qtà</th>
+    <th class="r" style="width:8%">UM</th>
+    <th class="r" style="width:8%">Sconto</th>
+    <th class="r" style="width:12%">Totale</th>
+    <th class="r" style="width:8%">IVA</th>
+  </tr></thead>
+  <tbody>${itemRows}</tbody>
+</table>
+
+<div class="totbox"><div class="totinner"><table>
+  <tr><td>Totale imponibile</td><td class="tv">${fEur(total)}</td></tr>
+  <tr><td>Totale documento</td><td class="tv">${fEur(total)}</td></tr>
+  ${stampDuty ? `<tr class="brow"><td>Imposta di bollo assolta in modo virtuale</td><td class="tv">${fEur(2)}</td></tr>` : ''}
+  <tr class="gtot"><td>Totale da pagare</td><td style="text-align:right">${fEur(total+(stampDuty?2:0))}</td></tr>
+</table></div></div>
+
+<div class="regnote">
+  <strong>Cod. IVA N2</strong> &mdash; ${esc(settings.tax_note||'')}
+</div>
+
+${preventivo.notes ? `<div style="font-size:8.5pt;margin-bottom:4mm;padding:6px 8px;border:1px solid #eee;border-radius:2px"><strong>Note:</strong> ${esc(preventivo.notes)}</div>` : ''}
+
+<div class="sigrow">
+  <div class="sigbox"><div class="siglbl">Data</div><div class="sigspace"></div></div>
+  <div class="sigbox"><div class="siglbl">Firma per accettazione</div><div class="sigspace"></div></div>
+  <div class="sigbox"><div class="siglbl">${esc(settings.company_name||'')}</div><div class="sigspace"></div></div>
+</div>
+
+<div class="footer">
+  <span>${esc(settings.company_name||'')} &mdash; ${esc(settings.company_address||'')} &mdash; ${esc(compAddrLine)}</span>
+  <span>${esc(settings.company_website||'')}</span>
+</div>
+
+</div></body></html>`
+}
