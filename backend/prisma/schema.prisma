@@ -81,6 +81,7 @@ model Intervento {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   fatture         Fattura[]
+  attachments     InterventoAttachment[]
 }
 
 model DDT {
@@ -153,4 +154,16 @@ model Counter {
 model Setting {
   key        String   @id
   value      String
+}
+
+model InterventoAttachment {
+  id            String     @id @default(uuid())
+  interventoId  String
+  intervento    Intervento @relation(fields: [interventoId], references: [id], onDelete: Cascade)
+  filename      String
+  driveFileId   String
+  driveUrl      String
+  mimeType      String
+  sizeBytes     Int
+  createdAt     DateTime   @default(now())
 }
