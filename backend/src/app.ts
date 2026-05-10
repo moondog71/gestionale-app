@@ -28,3 +28,4 @@ async function main() {
 }
 
 main().catch((err) => { console.error(err); process.exit(1) })
+// (aggiunto sotto — vedere sotto per rebuild)
