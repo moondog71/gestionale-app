@@ -39,7 +39,7 @@ export function buildInterventiHtml(intervento: any, client: any, settings: Reco
 body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#333}
 .page{padding:12mm 15mm}
 .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7mm}
-.logo{max-height:70px;max-width:180px}
+.logo{max-height:110px;max-width:280px;width:auto}
 .client-box{width:47%;border:1px solid #bbb;padding:7px 10px;border-radius:3px}
 .client-box .lbl{font-size:7pt;color:#888;font-weight:bold;text-transform:uppercase;margin-bottom:2px}
 .client-box .cname{font-size:11pt;font-weight:bold;color:#2B4BA0}
