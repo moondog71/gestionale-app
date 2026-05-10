@@ -169,3 +169,4 @@ export default async function scontriniRoutes(app: FastifyInstance) {
     return reply.code(204).send()
   })
 }
+
