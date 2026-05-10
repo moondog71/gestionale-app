@@ -103,7 +103,7 @@ export default function ScontriniPage() {
 
   // ── Import da Drive ──────────────────────────────────────
   const openDrive = async () => {
-    setDriveOpen(true); setDriveLoading(true)
+    setError(''); setDriveOpen(true); setDriveLoading(true)
     try { setDrivePending(await apiFetch<any[]>('/scontrini/drive-pending')) }
     catch { setError('Errore lettura Drive') }
     finally { setDriveLoading(false) }
