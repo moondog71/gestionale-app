@@ -155,7 +155,7 @@ export default function InterventiPage() {
   const handlePdf = async (item: any) => {
     setPdfLoading(item.id)
     try {
-      const res = await apiFetch<{driveUrl:string}>(`/interventi/${item.id}/pdf`, { method:'POST' })
+      const res = await apiFetch<{driveUrl:string}>(`/interventi/${item.id}/pdf`, { method:'POST', body:'{}' })
       window.open(res.driveUrl, '_blank')
       load()
     } catch (e: any) { setError('Errore generazione PDF: ' + e.message) }

@@ -31,7 +31,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> || {}),
   }
-  if (!(options.body instanceof FormData)) {
+  if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json'
   }
   const token = getToken()
