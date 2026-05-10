@@ -13,6 +13,8 @@ services:
 
   backend:
     build: ./backend
+    restart: unless-stopped
+    environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -23,16 +25,37 @@ services:
       GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN}
       GESTIONALE_DRIVE_FOLDER_ID: ${GESTIONALE_DRIVE_FOLDER_ID}
       SCONTRINI_DRIVE_FOLDER_ID: ${SCONTRINI_DRIVE_FOLDER_ID}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
     depends_on:
       - postgres
+    networks:
       - app-network
 
   frontend:
+    build: ./frontend
+    restart: unless-stopped
+    networks:
       - app-network
 
-  postgres_data:
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
 
+volumes:
+  postgres_data:
+  certbot_www:
+
+networks:
   app-network:
     driver: bridge
