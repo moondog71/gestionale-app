@@ -27,11 +27,26 @@ export async function extractScontrino(buffer: Buffer): Promise<ScontriniExtract
     date = `${y}-${m}-${d}` // ISO format
   }
 
-  // Importo totale
-  const amountMatch = text.match(/Totale\s+([\d.,]+)\s*€/)
+  // Importo totale — prova vari pattern (pdf-parse può variare la formattazione)
   let amount: number | null = null
-  if (amountMatch) {
-    amount = parseFloat(amountMatch[1].replace('.','').replace(',','.'))
+  const amountPatterns = [
+    /Totale[\s\n]+(\d+[.,]\d{2})\s*€/,
+    /Totale\s+(\d+[.,]\d{2})/,
+    /Totale[^\d]*(\d+[.,]\d{2})/,
+  ]
+  for (const pat of amountPatterns) {
+    const m = text.match(pat)
+    if (m) {
+      amount = parseFloat(m[1].replace(/\./g,'').replace(',','.'))
+      break
+    }
+  }
+  // Fallback: ultimo importo nel testo
+  if (!amount) {
+    const allAmounts = [...text.matchAll(/(\d+[.,]\d{2})\s*€/g)]
+    if (allAmounts.length > 0) {
+      amount = parseFloat(allAmounts[allAmounts.length-1][1].replace(/\./g,'').replace(',','.'))
+    }
   }
 
   // Tipo pagamento

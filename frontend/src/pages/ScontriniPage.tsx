@@ -125,6 +125,7 @@ export default function ScontriniPage() {
         fiscalCode:    extracted.fiscalCode    || '',
       })
       setDriveOpen(false)
+      setError('')
       setFormOpen(true)
     } catch { setError('Errore estrazione PDF') }
     finally { setExtracting(null) }
