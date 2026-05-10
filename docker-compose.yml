@@ -13,8 +13,6 @@ services:
 
   backend:
     build: ./backend
-    restart: unless-stopped
-    environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -25,23 +23,16 @@ services:
       GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN}
       GESTIONALE_DRIVE_FOLDER_ID: ${GESTIONALE_DRIVE_FOLDER_ID}
       SCONTRINI_DRIVE_FOLDER_ID: ${SCONTRINI_DRIVE_FOLDER_ID}
-      GESTIONALE_DRIVE_FOLDER_ID: ${GESTIONALE_DRIVE_FOLDER_ID}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
     depends_on:
       - postgres
-    networks:
       - app-network
 
   frontend:
-    build: ./frontend
-    restart: unless-stopped
-    networks:
       - app-network
 
-volumes:
   postgres_data:
 
-networks:
   app-network:
     driver: bridge
