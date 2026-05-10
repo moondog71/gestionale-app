@@ -29,10 +29,12 @@ const OUTCOMES = [
 
 interface Part { description: string; qty: number; unitPrice: number }
 
+const CALL_FEE_PART: Part = { description: 'Diritto di chiamata', qty: 1, unitPrice: 0 }
+
 const EMPTY_FORM = {
   clientId: '', date: new Date().toISOString().slice(0,10),
   addressOverride: '', applianceType: 'Lavatrice', brand: '', model: '', serial: '',
-  workType: 'riparazione', description: '', parts: [] as Part[],
+  workType: 'riparazione', description: '', parts: [{ ...CALL_FEE_PART }] as Part[],
   laborHours: '', laborRate: '', outcome: 'risolto', notes: ''
 }
 
