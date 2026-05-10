@@ -13,6 +13,8 @@ import SearchIcon from '@mui/icons-material/Search'
 import BuildIcon from '@mui/icons-material/BuildOutlined'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import Layout from '../components/ui/Layout'
 import { apiFetch } from '../api/client'
 
@@ -60,6 +62,7 @@ export default function InterventiPage() {
   const [form, setForm] = useState<any>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [pdfLoading, setPdfLoading] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -147,6 +150,16 @@ export default function InterventiPage() {
     } catch { setError('Errore eliminazione') }
   }
 
+  const handlePdf = async (item: any) => {
+    setPdfLoading(item.id)
+    try {
+      const res = await apiFetch<{driveUrl:string}>(`/interventi/${item.id}/pdf`, { method:'POST' })
+      window.open(res.driveUrl, '_blank')
+      load()
+    } catch (e: any) { setError('Errore generazione PDF: ' + e.message) }
+    finally { setPdfLoading(null) }
+  }
+
   const selectedClient = clients.find(c => c.id === form.clientId) || null
 
   return (
@@ -222,6 +235,25 @@ export default function InterventiPage() {
                   <Typography variant="body2" fontWeight={600} sx={{ minWidth:70, textAlign:'right', color:'primary.main' }}>
                     {formatEur(tot)}
                   </Typography>
+                  {item.driveUrl ? (
+                    <Tooltip title="Apri PDF">
+                      <IconButton size="small" onClick={() => window.open(item.driveUrl,'_blank')} sx={{ color:'success.main' }}>
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  ) : null}
+                  <Tooltip title="Genera PDF">
+                    <span>
+                      <IconButton size="small"
+                        onClick={() => handlePdf(item)}
+                        disabled={pdfLoading === item.id}
+                        sx={{ color: pdfLoading === item.id ? 'text.disabled' : '#c62828' }}>
+                        {pdfLoading === item.id
+                          ? <CircularProgress size={16} />
+                          : <PictureAsPdfOutlinedIcon fontSize="small" />}
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                   <Tooltip title="Modifica">
                     <IconButton size="small" onClick={() => openEdit(item)} sx={{ color:'primary.main' }}>
                       <EditOutlinedIcon fontSize="small" />
